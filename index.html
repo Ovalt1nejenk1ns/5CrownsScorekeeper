@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Five Crowns Deluxe Scorekeeper</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #116611;
+            color: white;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #228822;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background-color: #228822;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 5px 5px 0 0;
+            transition: background-color 0.3s;
+        }
+
+        .tab:hover {
+            background-color: #339933;
+        }
+
+        .tab.active {
+            background-color: #FFD700;
+            color: #116611;
+            font-weight: bold;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 0 5px 5px 5px;
+            min-height: 500px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+
+        .btn-primary {
+            background-color: #228822;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #339933;
+        }
+
+        .btn-warning {
+            background-color: #FFD700;
+            color: #116611;
+            font-weight: bold;
+        }
+
+        .btn-warning:hover {
+            background-color: #FFC700;
+        }
+
+        .btn-danger {
+            background-color: #cc0000;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #ff0000;
+        }
+
+        input[type="text"], input[type="number"] {
+            padding: 10px;
+            font-size: 16px;
+            border: 2px solid #228822;
+            border-radius: 5px;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        h1, h2, h3 {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .player-entry {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+            justify-content: center;
+        }
+
+        .player-entry label {
+            min-width: 150px;
+            font-size: 18px;
+        }
+
+        .player-entry input {
+            max-width: 150px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background-color: white;
+            color: black;
+        }
+
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+
+        th {
+            background-color: #228822;
+            color: white;
+            font-weight: bold;
+        }
+
+        .score-best {
+            color: green;
+            font-weight: bold;
+        }
+
+        .score-worst {
+            color: red;
+            font-weight: bold;
+        }
+
+        .leaderboard {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .leaderboard-item {
+            font-size: 18px;
+            margin: 10px 0;
+            padding: 10px;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 5px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+
+        .modal-content {
+            background-color: #116611;
+            margin: 10% auto;
+            padding: 30px;
+            border: 2px solid #FFD700;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 500px;
+            color: white;
+        }
+
+        .close {
+            color: #FFD700;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: white;
+        }
+
+        .winner-celebration {
+            text-align: center;
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #116611;
+            padding: 40px;
+            border-radius: 15px;
+        }
+
+        .winner-celebration h2 {
+            font-size: 48px;
+            margin: 20px 0;
+        }
+
+        .archive-item {
+            background-color: #228822;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .archive-item:hover {
+            background-color: #339933;
+        }
+
+        .winner-stats {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .center-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tutorial-frame {
+            width: 100%;
+            height: 600px;
+            border: 2px solid #228822;
+            border-radius: 5px;
+            background-color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🃏 Five Crowns Deluxe Scorekeeper 🃏</h1>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('current-game')">🃏 Current Game</button>
+            <button class="tab" onclick="switchTab('last-game')">📜 Last Game</button>
+            <button class="tab" onclick="switchTab('archive')">🗂️ Game History</button>
+        </div>
+
+        <!-- Current Game Tab -->
+        <div id="current-game" class="tab-content active">
+            <div id="game-content"></div>
+        </div>
+
+        <!-- Last Game Tab -->
+        <div id="last-game" class="tab-content">
+            <h2>📜 Last Game</h2>
+            <div id="last-game-content"></div>
+        </div>
+
+        <!-- Archive Tab -->
+        <div id="archive" class="tab-content">
+            <h2>📂 Game History</h2>
+            <div id="archive-content"></div>
+        </div>
+    </div>
+
+    <!-- Edit Round Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditModal()">&times;</span>
+            <h2 id="editModalTitle">Edit Round Scores</h2>
+            <div id="editModalContent"></div>
+            <button class="btn btn-primary" onclick="saveEditedScores()">Save</button>
+        </div>
+    </div>
+
+    <!-- Winner Modal -->
+    <div id="winnerModal" class="modal">
+        <div class="modal-content winner-celebration">
+            <span class="close" onclick="closeWinnerModal()">&times;</span>
+            <div id="winnerContent"></div>
+        </div>
+    </div>
+
+    <!-- Tutorial Modal -->
+    <div id="tutorialModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <span class="close" onclick="closeTutorial()">&times;</span>
+            <iframe id="tutorialFrame" class="tutorial-frame"></iframe>
+        </div>
+    </div>
+
+    <script>
+        // Constants
+        const STARTING_ROUND = 3;
+        const FINAL_ROUND = 13;
+
+        // Game State
+        let gameState = {
+            players: [],
+            scores: {},
+            currentRound: STARTING_ROUND,
+            editingRound: null
+        };
+
+        // Tutorial HTML
+        const TUTORIAL_HTML = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial; padding: 20px; background: #f5f5f5; }
+        h1 { color: #116611; text-align: center; }
+        h2 { color: #228822; margin-top: 20px; }
+        .section { background: white; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        ul { margin-left: 20px; }
+        li { margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <h1>🃏 How to Play Five Crowns 🃏</h1>
+    
+    <div class="section">
+        <h2>Game Overview</h2>
+        <p>Five Crowns is a rummy-style card game where players try to go out with the fewest points. The game uses a unique five-suited deck with stars, clubs, hearts, spades, and diamonds.</p>
+    </div>
+
+    <div class="section">
+        <h2>Game Structure</h2>
+        <ul>
+            <li><strong>Rounds:</strong> The game has 11 rounds (3 through 13)</li>
+            <li><strong>Cards per Round:</strong> In round 3, each player gets 3 cards; in round 4, each gets 4 cards, and so on up to 13 cards in round 13</li>
+            <li><strong>Wild Cards:</strong> The wild card changes each round to match the round number (3s are wild in round 3, 4s in round 4, etc.)</li>
+            <li><strong>Jokers:</strong> Jokers are ALWAYS wild in every round</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>How to Play a Round</h2>
+        <ol>
+            <li>Each player is dealt cards equal to the round number</li>
+            <li>Players take turns drawing from the deck or discard pile</li>
+            <li>Try to form sets (3+ cards of same rank) and runs (3+ cards in sequence of same suit)</li>
+            <li>When a player goes out (plays all their cards), others get one more turn</li>
+            <li>Count remaining cards in hand as points (lower is better!)</li>
+        </ol>
+    </div>
+
+    <div class="section">
+        <h2>Scoring</h2>
+        <ul>
+            <li><strong>3-9:</strong> Face value (3 = 3 points)</li>
+            <li><strong>10:</strong> 10 points</li>
+            <li><strong>Jack:</strong> 11 points</li>
+            <li><strong>Queen:</strong> 12 points</li>
+            <li><strong>King:</strong> 13 points</li>
+            <li><strong>Joker:</strong> 50 points</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>Winning</h2>
+        <p>After all 11 rounds are complete, the player with the <strong>LOWEST</strong> total score wins!</p>
+    </div>
+
+    <div class="section">
+        <h2>Using This Scorekeeper</h2>
+        <ol>
+            <li>Enter player names separated by commas</li>
+            <li>After each round, enter each player's score</li>
+            <li>The app tracks totals and shows who's winning</li>
+            <li>You can edit past rounds if you make a mistake</li>
+            <li>After round 13, the winner is announced!</li>
+        </ol>
+    </div>
+</body>
+</html>
+        `;
+
+        // Initialize
+        window.onload = function() {
+            loadGame();
+        };
+
+        function loadGame() {
+            const saved = localStorage.getItem('fiveCrownsGame');
+            if (saved) {
+                const load = confirm('Resume previous game?');
+                if (load) {
+                    gameState = JSON.parse(saved);
+                    drawGameUI();
+                } else {
+                    showPlayerEntry();
+                }
+            } else {
+                showPlayerEntry();
+            }
+            updateLastGameTab();
+            updateArchiveTab();
+        }
+
+        function saveGame() {
+            localStorage.setItem('fiveCrownsGame', JSON.stringify(gameState));
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+
+            if (tabName === 'last-game') updateLastGameTab();
+            if (tabName === 'archive') updateArchiveTab();
+        }
+
+        function showPlayerEntry() {
+            const content = document.getElementById('game-content');
+            content.innerHTML = `
+                <div class="center-content">
+                    <button class="btn btn-warning" onclick="showTutorial()">❓ How to Play</button>
+                    
+                    ${getWinnerStats()}
+                    
+                    <h2>Enter player names (comma-separated):</h2>
+                    <input type="text" id="playerNames" placeholder="Alice, Bob, Charlie" onkeypress="if(event.key==='Enter') startGame()">
+                    <button class="btn btn-primary" onclick="startGame()">Start Game</button>
+                </div>
+            `;
+        }
+
+        function getWinnerStats() {
+            const stats = JSON.parse(localStorage.getItem('winnerStats') || '{}');
+            if (Object.keys(stats).length === 0) return '';
+            
+            const sorted = Object.entries(stats).sort((a, b) => b[1] - a[1]);
+            let html = '<div class="winner-stats"><h3>🏆 Past Winners</h3>';
+            sorted.forEach(([name, wins]) => {
+                html += `<div class="leaderboard-item">${name}: ${wins} win${wins !== 1 ? 's' : ''}</div>`;
+            });
+            html += '</div>';
+            return html;
+        }
+
+        function updateWinnerStats(winnerName) {
+            const stats = JSON.parse(localStorage.getItem('winnerStats') || '{}');
+            stats[winnerName] = (stats[winnerName] || 0) + 1;
+            localStorage.setItem('winnerStats', JSON.stringify(stats));
+        }
+
+        function startGame() {
+            const input = document.getElementById('playerNames').value;
+            const names = input.split(',').map(n => n.trim()).filter(n => n);
+            
+            if (names.length === 0) {
+                alert('Please enter at least one player name.');
+                return;
+            }
+            
+            gameState.players = names;
+            gameState.scores = {};
+            names.forEach(name => gameState.scores[name] = []);
+            gameState.currentRound = STARTING_ROUND;
+            
+            saveGame();
+            drawGameUI();
+        }
+
+        function drawGameUI() {
+            const content = document.getElementById('game-content');
+            
+            let html = `
+                <div class="center-content">
+                    <button class="btn btn-warning" onclick="showTutorial()">❓ How to Play</button>
+                    <h2>Round ${gameState.currentRound}</h2>
+                    
+                    <div style="margin: 20px 0;">
+            `;
+            
+            gameState.players.forEach(player => {
+                html += `
+                    <div class="player-entry">
+                        <label>${player}</label>
+                        <input type="number" id="score-${player}" min="0" onkeypress="if(event.key==='Enter') submitScores()">
+                    </div>
+                `;
+            });
+            
+            html += `
+                    </div>
+                    <button class="btn btn-primary" onclick="submitScores()">Submit Scores</button>
+                    ${getScoreTable()}
+                    ${getLeaderboard()}
+                    <button class="btn btn-danger" onclick="newGame()">Start New Game</button>
+                </div>
+            `;
+            
+            content.innerHTML = html;
+        }
+
+        function submitScores() {
+            const newScores = {};
+            let valid = true;
+            
+            gameState.players.forEach(player => {
+                const input = document.getElementById(`score-${player}`);
+                const value = parseInt(input.value);
+                
+                if (isNaN(value) || value < 0) {
+                    valid = false;
+                    return;
+                }
+                
+                newScores[player] = value;
+            });
+            
+            if (!valid) {
+                alert('Please enter valid scores for all players.');
+                return;
+            }
+            
+            gameState.players.forEach(player => {
+                gameState.scores[player].push(newScores[player]);
+            });
+            
+            gameState.currentRound++;
+            saveGame();
+            
+            if (gameState.currentRound > FINAL_ROUND) {
+                endGame();
+            } else {
+                drawGameUI();
+            }
+        }
+
+        function getScoreTable() {
+            if (gameState.scores[gameState.players[0]].length === 0) {
+                return '';
+            }
+            
+            let html = '<h3>📊 Round Scores</h3><table><thead><tr><th>Round</th>';
+            gameState.players.forEach(player => {
+                html += `<th>${player}</th>`;
+            });
+            html += '<th>Edit</th></tr></thead><tbody>';
+            
+            const numRounds = gameState.scores[gameState.players[0]].length;
+            for (let i = 0; i < numRounds; i++) {
+                const roundNum = i + STARTING_ROUND;
+                const scores = gameState.players.map(p => gameState.scores[p][i]);
+                const minScore = Math.min(...scores);
+                const maxScore = Math.max(...scores);
+                
+                html += `<tr><td>${roundNum}</td>`;
+                gameState.players.forEach(player => {
+                    const score = gameState.scores[player][i];
+                    let className = '';
+                    if (score === minScore) className = 'score-best';
+                    else if (score === maxScore) className = 'score-worst';
+                    
+                    html += `<td class="${className}">${score}</td>`;
+                });
+                html += `<td><button class="btn btn-primary" onclick="editRound(${i})">Edit</button></td></tr>`;
+            }
+            
+            html += '</tbody></table>';
+            return html;
+        }
+
+        function getLeaderboard() {
+            const totals = {};
+            gameState.players.forEach(player => {
+                totals[player] = gameState.scores[player].reduce((sum, score) => sum + score, 0);
+            });
+            
+            const sorted = Object.entries(totals).sort((a, b) => a[1] - b[1]);
+            
+            let html = '<div class="leaderboard"><h3>🏆 Leaderboard</h3>';
+            sorted.forEach(([player, total]) => {
+                html += `<div class="leaderboard-item">${player}: ${total} points</div>`;
+            });
+            html += '</div>';
+            
+            return html;
+        }
+
+        function editRound(roundIndex) {
+            gameState.editingRound = roundIndex;
+            const modal = document.getElementById('editModal');
+            const title = document.getElementById('editModalTitle');
+            const content = document.getElementById('editModalContent');
+            
+            title.textContent = `Edit Round ${roundIndex + STARTING_ROUND} Scores`;
+            
+            let html = '';
+            gameState.players.forEach(player => {
+                html += `
+                    <div class="player-entry">
+                        <label>${player}</label>
+                        <input type="number" id="edit-${player}" value="${gameState.scores[player][roundIndex]}" min="0">
+                    </div>
+                `;
+            });
+            
+            content.innerHTML = html;
+            modal.style.display = 'block';
+        }
+
+        function saveEditedScores() {
+            const roundIndex = gameState.editingRound;
+            let valid = true;
+            
+            gameState.players.forEach(player => {
+                const input = document.getElementById(`edit-${player}`);
+                const value = parseInt(input.value);
+                
+                if (isNaN(value) || value < 0) {
+                    valid = false;
+                    return;
+                }
+                
+                gameState.scores[player][roundIndex] = value;
+            });
+            
+            if (!valid) {
+                alert('Please enter valid scores.');
+                return;
+            }
+            
+            saveGame();
+            closeEditModal();
+            drawGameUI();
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        function endGame() {
+            const totals = {};
+            gameState.players.forEach(player => {
+                totals[player] = gameState.scores[player].reduce((sum, score) => sum + score, 0);
+            });
+            
+            const winner = Object.entries(totals).reduce((min, curr) => 
+                curr[1] < min[1] ? curr : min
+            );
+            
+            updateWinnerStats(winner[0]);
+            archiveGame();
+            showWinner(winner[0], winner[1]);
+            drawGameUI();
+            updateLastGameTab();
+            updateArchiveTab();
+        }
+
+        function showWinner(name, score) {
+            const modal = document.getElementById('winnerModal');
+            const content = document.getElementById('winnerContent');
+            
+            content.innerHTML = `
+                <h2>🏆</h2>
+                <h2>Winner: ${name}</h2>
+                <h3>Score: ${score} points! 🎉</h3>
+                <p style="font-size: 20px; margin-top: 20px;">You are the Five Crowns Champion!</p>
+                <button class="btn btn-primary" onclick="closeWinnerModal()" style="margin-top: 20px;">Close</button>
+            `;
+            
+            modal.style.display = 'block';
+        }
+
+        function closeWinnerModal() {
+            document.getElementById('winnerModal').style.display = 'none';
+        }
+
+        function archiveGame() {
+            const archives = JSON.parse(localStorage.getItem('gameArchives') || '[]');
+            const timestamp = new Date().toISOString();
+            
+            archives.push({
+                players: gameState.players,
+                scores: gameState.scores,
+                completedAt: timestamp
+            });
+            
+            localStorage.setItem('gameArchives', JSON.stringify(archives));
+        }
+
+        function updateLastGameTab() {
+            const content = document.getElementById('last-game-content');
+            const archives = JSON.parse(localStorage.getItem('gameArchives') || '[]');
+            
+            if (archives.length === 0) {
+                content.innerHTML = '<p style="text-align: center;">No archived games yet.</p>';
+                return;
+            }
+            
+            const lastGame = archives[archives.length - 1];
+            const date = new Date(lastGame.completedAt).toLocaleString();
+            
+            const totals = {};
+            lastGame.players.forEach(player => {
+                totals[player] = lastGame.scores[player].reduce((sum, score) => sum + score, 0);
+            });
+            
+            const sorted = Object.entries(totals).sort((a, b) => a[1] - b[1]);
+            
+            let html = `<h3>🗓️ Completed: ${date}</h3><div class="leaderboard">`;
+            sorted.forEach(([player, total]) => {
+                html += `<div class="leaderboard-item">${player}: ${total} points</div>`;
+            });
+            html += '</div>';
+            
+            content.innerHTML = html;
+        }
+
+        function updateArchiveTab() {
+            const content = document.getElementById('archive-content');
+            const archives = JSON.parse(localStorage.getItem('gameArchives') || '[]');
+            
+            if (archives.length === 0) {
+                content.innerHTML = '<p style="text-align: center;">No archived games yet.</p>';
+                return;
+            }
+            
+            let html = '';
+            archives.reverse().forEach((game, index) => {
+                const date = new Date(game.completedAt).toLocaleString();
+                html += `<div class="archive-item" onclick="showGameSummary(${archives.length - 1 - index})">${date}</div>`;
+            });
+            
+            content.innerHTML = html;
+        }
+
+        function showGameSummary(index) {
+            const archives = JSON.parse(localStorage.getItem('gameArchives') || '[]');
+            const game = archives[index];
+            const date = new Date(game.completedAt).toLocaleString();
+            
+            const totals = {};
+            game.players.forEach(player => {
+                totals[player] = game.scores[player].reduce((sum, score) => sum + score, 0);
+            });
+            
+            const sorted = Object.entries(totals).sort((a, b) => a[1] - b[1]);
+            
+            let message = `Game Completed: ${date}\n\n`;
+            sorted.forEach(([player, total]) => {
+                message += `${player}: ${total} points\n`;
+            });
+            
+            alert(message);
+        }
+
+        function newGame() {
+            if (!confirm('Start a new game? Current progress will be erased.')) {
+                return;
+            }
+            
+            localStorage.removeItem('fiveCrownsGame');
+            gameState = {
+                players: [],
+                scores: {},
+                currentRound: STARTING_ROUND,
+                editingRound: null
+            };
+            
+            showPlayerEntry();
+        }
+
+        function showTutorial() {
+            const modal = document.getElementById('tutorialModal');
+            const frame = document.getElementById('tutorialFrame');
+            
+            const blob = new Blob([TUTORIAL_HTML], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            frame.src = url;
+            
+            modal.style.display = 'block';
+        }
+
+        function closeTutorial() {
+            document.getElementById('tutorialModal').style.display = 'none';
+        }
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
