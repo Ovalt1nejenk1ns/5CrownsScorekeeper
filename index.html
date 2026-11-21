@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Five Crowns Deluxe Scorekeeper</title>
     <style>
+        [hidden] { display: none !important; }  /* inline display styles would otherwise beat hidden */
         * {
             margin: 0;
             padding: 0;
@@ -263,6 +264,7 @@
 </head>
 <body>
     <div class="container">
+        <a href="/" id="homeLink" hidden style="color:white;font-weight:bold;text-decoration:none;display:inline-block;margin-bottom:8px">← Game Night home</a>
         <h1>🃏 Five Crowns Deluxe Scorekeeper 🃏</h1>
         
         <div class="tabs">
@@ -487,6 +489,7 @@
         // The id comes from the finish time, so sending again updates the same game, never a copy.
         async function uploadArchives() {
             if (!(await Sync.ready())) return;
+            document.getElementById('homeLink').hidden = false;   // only on the Game Night server
             const archives = JSON.parse(localStorage.getItem('gameArchives') || '[]');
             for (const game of archives) {
                 const id = 'fc-archive-' + game.completedAt.replace(/\D/g, '').slice(0, 17);
