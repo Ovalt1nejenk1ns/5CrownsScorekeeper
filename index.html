@@ -285,6 +285,10 @@
         <!-- Archive Tab -->
         <div id="archive" class="tab-content">
             <h2>📂 Game History</h2>
+            <div class="center-content">
+                <button class="btn btn-primary" onclick="exportArchive()">⬇ Export all games (CSV)</button>
+                <p style="font-size: 14px;">For the game archive: <code>python builder/db.py import &lt;file&gt;</code></p>
+            </div>
             <div id="archive-content"></div>
         </div>
     </div>
@@ -776,6 +780,34 @@
             });
             
             alert(message);
+        }
+
+        // One CSV row per player per round, for every finished game on this device.
+        // The game archive (builder/db.py) uses "Completed" to spot games it already has.
+        function exportArchive() {
+            const archives = JSON.parse(localStorage.getItem('gameArchives') || '[]');
+            if (archives.length === 0) {
+                alert('No finished games to export yet.');
+                return;
+            }
+            // Quote names that contain commas or quotes, so "Smith, Jr." stays one column.
+            const cell = (v) => /[",\n]/.test(String(v)) ? '"' + String(v).replace(/"/g, '""') + '"' : String(v);
+            const lines = ['Completed,Round,Player,Points'];
+            archives.forEach(game => {
+                game.players.forEach(player => {
+                    (game.scores[player] || []).forEach((points, i) => {
+                        lines.push([game.completedAt, STARTING_ROUND + i, cell(player), points].join(','));
+                    });
+                });
+            });
+            const blob = new Blob([lines.join('\n') + '\n'], { type: 'text/csv' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'five-crowns-history-' + new Date().toISOString().slice(0, 10) + '.csv';
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            setTimeout(() => URL.revokeObjectURL(link.href), 1000);  // revoking right away can cancel the download
         }
 
         function newGame() {
