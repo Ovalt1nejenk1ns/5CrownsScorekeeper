@@ -274,6 +274,7 @@
         <!-- Current Game Tab -->
         <div id="current-game" class="tab-content active">
             <div id="game-content"></div>
+            <p id="syncStatus" role="status" style="text-align:center;opacity:.85;margin-top:16px"></p>
         </div>
 
         <!-- Last Game Tab -->
@@ -316,6 +317,62 @@
     </div>
 
     <script>
+        // ------------------------------------------------------------------ auto-save to the Game Night server
+        // When this page is served by game-night-server, every save also goes to its SQLite database.
+        // On GitHub Pages there's no /api, the health check fails, and this quietly does nothing.
+        const Sync = (() => {
+          let enabled = false, sending = false;
+          const queue = new Map(), failed = new Map();   // keyed by game id, so two games never overwrite each other
+          const ready = fetch("/api/health", { cache: "no-store" })
+            .then((r) => r.ok && (r.headers.get("content-type") || "").includes("json"))
+            .then((ok) => { enabled = Boolean(ok); if (enabled) show("Connected to the game server"); })
+            .catch(() => {});
+
+          function show(text, bad = false) {
+            const el = document.getElementById("syncStatus");
+            if (el) { el.textContent = text; el.style.color = bad ? "#ffb3b3" : ""; }
+          }
+
+          // Each save sends the whole game, so a later save also fixes any earlier one that failed.
+          async function save(id, gameType, state) {
+            await ready;
+            if (!enabled || !id) return;
+            queue.set(id, JSON.stringify({ game_type: gameType, state }));  // newer state for the same game replaces older
+            flush();
+          }
+
+          async function flush() {
+            if (sending) return;            // the running loop picks up anything queued meanwhile
+            sending = true;
+            while (queue.size) {
+              const [id, body] = queue.entries().next().value;
+              queue.delete(id);
+              try {
+                const r = await fetch(`/api/games/${encodeURIComponent(id)}`, {
+                  method: "PUT", headers: { "Content-Type": "application/json" }, body,
+                });
+                if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || `HTTP ${r.status}`);
+                failed.delete(id);
+                show("✓ Saved to the game server");
+              } catch (err) {
+                failed.set(id, body);
+                show(`Not saved to the server yet (${err.message}). It will retry on the next save.`, true);
+              }
+            }
+            sending = false;
+          }
+
+          const retry = () => { failed.forEach((body, id) => queue.has(id) || queue.set(id, body)); flush(); };
+          window.addEventListener("online", retry);
+          document.addEventListener("visibilitychange", () => { if (!document.hidden) retry(); });
+
+          return { save, ready: () => ready.then(() => enabled) };
+        })();
+
+        // crypto.randomUUID() only works on https or localhost. Over http://klisby it's undefined,
+        // so build an id from the time plus random letters instead.
+        const newGameId = (prefix) => `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+
         // Constants
         const STARTING_ROUND = 3;
         const FINAL_ROUND = 13;
@@ -423,10 +480,26 @@
             }
             updateLastGameTab();
             updateArchiveTab();
+            uploadArchives();
+        }
+
+        // Games finished before the server existed only live in this browser. Send them once.
+        // The id comes from the finish time, so sending again updates the same game, never a copy.
+        async function uploadArchives() {
+            if (!(await Sync.ready())) return;
+            const archives = JSON.parse(localStorage.getItem('gameArchives') || '[]');
+            for (const game of archives) {
+                const id = 'fc-archive-' + game.completedAt.replace(/\D/g, '').slice(0, 17);
+                const label = 'Five Crowns ' + new Date(game.completedAt).toLocaleDateString();
+                await Sync.save(id, 'fivecrowns', { label, players: game.players, scores: game.scores });
+            }
         }
 
         function saveGame() {
             localStorage.setItem('fiveCrownsGame', JSON.stringify(gameState));
+            if (!gameState.id) gameState.id = newGameId('fc');   // games started before auto-save
+            const { editingRound, ...state } = gameState;          // UI-only field stays out of the database
+            Sync.save(gameState.id, 'fivecrowns', state);
         }
 
         function switchTab(tabName) {
@@ -483,6 +556,8 @@
                 return;
             }
             
+            gameState.id = newGameId('fc');
+            gameState.label = 'Five Crowns ' + new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
             gameState.players = names;
             gameState.scores = {};
             names.forEach(name => gameState.scores[name] = []);
