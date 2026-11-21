@@ -261,6 +261,7 @@
             background-color: white;
         }
     </style>
+    <script src="cloud-sync.js"></script>
 </head>
 <body>
     <div class="container">
@@ -565,6 +566,8 @@
             gameState.scores = {};
             names.forEach(name => gameState.scores[name] = []);
             gameState.currentRound = STARTING_ROUND;
+            gameState.id = window.CloudSync ? CloudSync.newId() : '';
+            gameState.startedAt = new Date().toISOString();
             
             saveGame();
             drawGameUI();
@@ -782,6 +785,8 @@
             const timestamp = new Date().toISOString();
             
             archives.push({
+                id: gameState.id,                 // same id the cloud has, so the backfill can't duplicate it
+                startedAt: gameState.startedAt,
                 players: gameState.players,
                 scores: gameState.scores,
                 completedAt: timestamp
